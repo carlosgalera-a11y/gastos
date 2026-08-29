@@ -1,0 +1,437 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="theme-color" content="#0b1326">
+<title>Gastos · Piso Horta</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🏡</text></svg>">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  /* Tema oscuro fijo — tokens fh-* de FileHub */
+  :root {
+    --bg: #0b1326; --card: #131b2e; --card2: #171f33; --card3: #222a3d;
+    --line: #283449; --line2: #334155;
+    --ink: #F8FAFC; --muted: #94A3B8; --soft: #64748b;
+    --peri: #8083ff; --peri-soft: #8083ff26; --peri-claro: #c0c1ff;
+    --mint: #4edea3; --peach: #ffb783; --rojo: #EF4444; --ambar: #F59E0B;
+    --montse: #f472b6;
+    --radius: 16px;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html { -webkit-text-size-adjust: 100%; color-scheme: dark; }
+  body {
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    background: var(--bg); color: var(--ink);
+    padding: max(16px, env(safe-area-inset-top)) 14px calc(28px + env(safe-area-inset-bottom));
+    font-size: 14px; line-height: 1.45;
+  }
+  h1, h2, h3 { font-family: 'Hanken Grotesk', 'Inter', sans-serif; }
+  .wrap { max-width: 640px; margin: 0 auto; }
+  button { font-family: inherit; cursor: pointer; }
+
+  /* ── Cabecera ── */
+  header { display: flex; align-items: center; gap: 12px; margin-bottom: 16px; }
+  .logo { width: 42px; height: 42px; border-radius: 13px; background: linear-gradient(135deg, #e89a5f, #ffb783); display: flex; align-items: center; justify-content: center; font-size: 21px; flex: none; }
+  .brand h1 { font-size: 19px; font-weight: 800; letter-spacing: -.01em; }
+  .brand p { font-size: 11px; color: var(--muted); font-weight: 500; }
+  #quienSoy { margin-left: auto; display: none; align-items: center; gap: 8px; }
+  .avatar { width: 30px; height: 30px; border-radius: 50%; background: var(--peri); color: #0b1326; font-weight: 800; font-size: 13px; display: flex; align-items: center; justify-content: center; }
+  .avatar.m { background: var(--montse); }
+  #salir { border: 1px solid var(--line); background: var(--card); color: var(--muted); border-radius: 9px; padding: 6px 10px; font-size: 12px; font-weight: 600; }
+  #salir:hover { color: var(--ink); border-color: var(--line2); }
+
+  /* ── Pestañas ── */
+  .tabs { display: grid; grid-template-columns: repeat(4, 1fr); gap: 7px; margin-bottom: 14px; }
+  .tabs button {
+    border: 1px solid var(--line); background: var(--card); color: var(--muted);
+    border-radius: 13px; padding: 9px 4px; font-weight: 700; font-size: 12px;
+    display: flex; flex-direction: column; align-items: center; gap: 3px;
+    transition: border-color .15s, background .15s, color .15s;
+  }
+  .tabs button .n { font-size: 10px; font-weight: 600; color: var(--soft); }
+  .tabs button.on { border-color: rgba(128,131,255,.6); background: var(--peri-soft); color: var(--ink); }
+  .tabs button .ico { font-size: 16px; }
+
+  /* ── Tarjetas ── */
+  .card { background: var(--card); border: 1px solid var(--line); border-radius: var(--radius); padding: 14px; margin-bottom: 12px; }
+  .vacio { color: var(--soft); font-style: italic; text-align: center; padding: 22px 0; font-size: 13px; }
+
+  /* Subida */
+  .subida { border-style: dashed; border-width: 2px; text-align: center; }
+  .subida p.t { font-weight: 700; font-size: 13.5px; }
+  .subida p.s { font-size: 11px; color: var(--muted); margin: 4px 0 10px; }
+  .btn {
+    border: none; border-radius: 11px; padding: 10px 18px; font-weight: 700; font-size: 13.5px;
+    background: var(--peri); color: #fff; display: inline-flex; align-items: center; gap: 7px;
+  }
+  .btn:hover { background: #9a9dff; }
+  .btn[disabled] { opacity: .5; cursor: default; }
+  .btn.ghost { background: transparent; border: 1px solid var(--line2); color: var(--muted); }
+  .btn.ghost:hover { color: var(--ink); }
+  #msg { font-size: 12px; color: var(--muted); margin-top: 8px; min-height: 15px; }
+
+  /* Filas de factura */
+  .fila { display: flex; align-items: center; gap: 10px; padding: 10px 2px; border-bottom: 1px solid rgba(51,65,85,.35); }
+  .fila:last-child { border-bottom: none; }
+  .fila .ico { font-size: 17px; flex: none; }
+  .fila .info { flex: 1; min-width: 0; }
+  .fila .nom { font-weight: 600; font-size: 13.5px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .fila .det { font-size: 10.5px; color: var(--soft); }
+  .quien { width: 17px; height: 17px; border-radius: 50%; flex: none; display: inline-flex; align-items: center; justify-content: center; font-size: 9px; font-weight: 800; background: var(--peri); color: #0b1326; }
+  .quien.m { background: var(--montse); }
+  .accion { border: none; background: none; color: var(--muted); font-size: 15px; padding: 5px; flex: none; }
+  .accion:hover { color: var(--ink); }
+  .accion.rojo:hover { color: var(--rojo); }
+
+  /* Estrategias */
+  .estr { margin-bottom: 10px; overflow: hidden; padding: 0; }
+  .estr .cab { display: flex; align-items: center; gap: 10px; padding: 12px 14px; cursor: pointer; }
+  .check { width: 24px; height: 24px; border-radius: 50%; border: 1.5px solid var(--line2); background: none; color: transparent; font-size: 13px; display: flex; align-items: center; justify-content: center; flex: none; }
+  .check.si { background: var(--mint); border-color: var(--mint); color: #0b1326; }
+  .estr .tit { flex: 1; min-width: 0; font-weight: 700; font-size: 13.5px; }
+  .estr.hecha .tit { text-decoration: line-through; color: var(--muted); }
+  .estr .por { font-size: 10px; color: var(--soft); font-weight: 500; }
+  .estr .cuerpo { display: none; padding: 2px 16px 14px; font-size: 13px; color: rgba(248,250,252,.88); white-space: pre-wrap; border-top: 1px solid rgba(51,65,85,.4); padding-top: 10px; }
+  .estr.abierta .cuerpo { display: block; }
+  .flecha { color: var(--soft); font-size: 12px; transition: transform .15s; }
+  .estr.abierta .flecha { transform: rotate(180deg); }
+
+  #formEstr { display: none; }
+  #formEstr.on { display: block; }
+  #formEstr input, #formEstr textarea {
+    width: 100%; background: var(--bg); border: 1px solid var(--line2); border-radius: 11px;
+    color: var(--ink); padding: 10px 12px; font-size: 14px; font-family: inherit; margin-bottom: 8px; outline: none;
+  }
+  #formEstr input:focus, #formEstr textarea:focus { border-color: rgba(128,131,255,.6); }
+  #formEstr textarea { min-height: 110px; resize: vertical; }
+  .fin { display: flex; justify-content: flex-end; gap: 8px; }
+
+  /* ── Login ── */
+  #login { max-width: 380px; margin: 40px auto; display: none; }
+  #login .card { padding: 22px; }
+  #login h3 { font-size: 16px; margin-bottom: 4px; }
+  #login p.s { font-size: 12px; color: var(--muted); margin-bottom: 14px; }
+  #gbtn { width: 100%; display: flex; align-items: center; justify-content: center; gap: 10px; padding: 12px; font-size: 14px; font-weight: 700; border: 1px solid var(--line2); border-radius: 12px; background: var(--card3); color: var(--ink); }
+  #gbtn:hover { border-color: var(--peri); }
+  .sep { display: flex; align-items: center; gap: 10px; margin: 14px 0; color: var(--soft); font-size: 11px; }
+  .sep span.l { flex: 1; height: 1px; background: var(--line); }
+  #login input { width: 100%; background: var(--bg); border: 1px solid var(--line2); border-radius: 11px; color: var(--ink); padding: 11px 12px; font-size: 16px; font-family: inherit; margin-bottom: 8px; outline: none; }
+  #login input:focus { border-color: rgba(128,131,255,.6); }
+  #lbtn { width: 100%; justify-content: center; }
+  #login .nota { font-size: 11px; color: var(--soft); margin-top: 10px; }
+
+  #estado { text-align: center; font-size: 12px; color: var(--muted); margin: 8px 0; }
+  footer { margin-top: 20px; text-align: center; font-size: 11px; color: var(--soft); }
+  footer a { color: var(--peri-claro); }
+
+  @media (max-width: 400px) {
+    .tabs button { font-size: 11px; }
+    .tabs button .n { display: none; }
+  }
+  @media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="logo">🏡</div>
+    <div class="brand">
+      <h1>Gastos · Piso Horta</h1>
+      <p>Carlos + Montse · facturas y ahorro</p>
+    </div>
+    <div id="quienSoy">
+      <div class="avatar" id="avatar">·</div>
+      <button id="salir">Salir</button>
+    </div>
+  </header>
+
+  <div id="login">
+    <div class="card">
+      <h3>Entra con tu cuenta de FileHub</h3>
+      <p class="s">La misma de siempre. Si ya has entrado en FileHub o el calendario en este navegador, la sesión se comparte sola.</p>
+      <button id="gbtn">
+        <svg width="18" height="18" viewBox="0 0 48 48"><path fill="#FFC107" d="M43.6 20.1H42V20H24v8h11.3C33.7 32.7 29.2 36 24 36c-6.6 0-12-5.4-12-12s5.4-12 12-12c3.1 0 5.9 1.2 8 3l5.7-5.7C34.3 6.1 29.4 4 24 4 13 4 4 13 4 24s9 20 20 20 20-9 20-20c0-1.3-.1-2.6-.4-3.9z"/><path fill="#FF3D00" d="M6.3 14.7l6.6 4.8C14.7 15.1 19 12 24 12c3.1 0 5.9 1.2 8 3l5.7-5.7C34.3 6.1 29.4 4 24 4 16.3 4 9.7 8.3 6.3 14.7z"/><path fill="#4CAF50" d="M24 44c5.2 0 9.9-2 13.4-5.2l-6.2-5.2C29.2 35.1 26.7 36 24 36c-5.2 0-9.6-3.3-11.3-8l-6.5 5C9.5 39.6 16.2 44 24 44z"/><path fill="#1976D2" d="M43.6 20.1H42V20H24v8h11.3c-.8 2.3-2.3 4.3-4.1 5.7l6.2 5.2C36.9 40.4 44 35 44 24c0-1.3-.1-2.6-.4-3.9z"/></svg>
+        Continuar con Google
+      </button>
+      <div class="sep"><span class="l"></span> o con tu email <span class="l"></span></div>
+      <input id="lemail" type="email" placeholder="Email" autocomplete="username">
+      <input id="lpass" type="password" placeholder="Contraseña" autocomplete="current-password">
+      <button id="lbtn" class="btn">Entrar</button>
+      <p class="nota">Solo Carlos y Montse pueden ver los gastos del piso (lo garantiza el servidor, no esta página).</p>
+    </div>
+  </div>
+
+  <div id="app" style="display:none">
+    <div class="tabs" id="tabs">
+      <button data-t="luz"><span class="ico">⚡</span> Luz <span class="n" id="nLuz">0</span></button>
+      <button data-t="comida"><span class="ico">🛒</span> Comida <span class="n" id="nComida">0</span></button>
+      <button data-t="otros"><span class="ico">📦</span> Otros <span class="n" id="nOtros">0</span></button>
+      <button data-t="ahorro"><span class="ico">🐷</span> Ahorro <span class="n" id="nAhorro">0</span></button>
+    </div>
+
+    <div id="estado"></div>
+
+    <!-- Facturas -->
+    <div id="vFacturas">
+      <div class="card subida">
+        <p class="t" id="subTitulo">Sube facturas de luz</p>
+        <p class="s">PDF o foto. Van al almacén privado de FileHub y las veis los dos.</p>
+        <button class="btn" id="subirBtn">⬆️ Subir factura</button>
+        <input type="file" id="fichero" multiple accept=".pdf,image/*,.doc,.docx,.xls,.xlsx,.csv" style="display:none">
+        <p id="msg"></p>
+      </div>
+      <div class="card" id="listaFacturas"><div class="vacio">Cargando…</div></div>
+    </div>
+
+    <!-- Estrategias de ahorro -->
+    <div id="vAhorro" style="display:none">
+      <div class="card" style="display:flex;align-items:center;gap:10px">
+        <p style="flex:1;font-size:12px;color:var(--muted)">Ideas y planes de ahorro del piso. Tocad una para desplegarla; el círculo la marca hecha.</p>
+        <button class="btn" id="nuevaEstrBtn">+ Nueva</button>
+      </div>
+      <div class="card" id="formEstr">
+        <input id="eTitulo" placeholder="Título de la estrategia">
+        <textarea id="eTexto" placeholder="Detalle (qué comprar, cuándo, cuánto ahorráis…)"></textarea>
+        <div class="fin">
+          <button class="btn ghost" id="eCancelar">Cancelar</button>
+          <button class="btn" id="eGuardar">Guardar</button>
+        </div>
+      </div>
+      <div id="listaEstr"><div class="vacio">Cargando…</div></div>
+    </div>
+  </div>
+
+  <footer>Conectado a <a href="https://arditifilehub.com">FileHub</a> — los mismos datos que el apartado «Piso Horta» de la app.</footer>
+</div>
+
+<script type="module">
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
+
+const SUPABASE_URL = 'https://igvadjgjpyuvzailjqwg.supabase.co';
+const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlndmFkamdqcHl1dnphaWxqcXdnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzI0NDI3MTAsImV4cCI6MjA4ODAxODcxMH0.eAqKCHDzrkvMTseaBP0I_JICP1owX60-cp3agYqRz4Q';
+// Mismo proyecto y mismo origen (carlosgalera-a11y.github.io) que el espejo de
+// FileHub → la sesión de Supabase se comparte sola entre las dos apps.
+const sb = createClient(SUPABASE_URL, SUPABASE_KEY);
+
+const UID_CARLOS = '69428dff-f2b6-46ae-8120-0052e9bbed51';
+const UID_MONTSE = '94c1791d-3a28-4452-a166-233cb9783749';
+
+const CARPETAS = { luz: 'Piso Horta · Luz', comida: 'Piso Horta · Comida', otros: 'Piso Horta · Otros' };
+const TITULOS = { luz: 'Sube facturas de luz', comida: 'Sube facturas de comida', otros: 'Sube otras facturas' };
+
+const $ = id => document.getElementById(id);
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+const fmtKB = b => !b ? '' : b < 1048576 ? `${Math.max(1, Math.round(b / 1024))} KB` : `${(b / 1048576).toFixed(1)} MB`;
+const quien = uid => uid === UID_MONTSE ? '<span class="quien m" title="Montse">M</span>' : '<span class="quien" title="Carlos">C</span>';
+const icoDe = n => /\.(png|jpe?g|gif|webp|heic)$/i.test(n) ? '🖼️' : /\.(xlsx?|csv)$/i.test(n) ? '📊' : '📄';
+
+/** Nombre seguro para Storage (sin acentos/espacios), como en FileHub. */
+const rutaSegura = nombre => {
+  const limpio = nombre.normalize('NFD').replace(/[̀-ͯ]/g, '')
+    .replace(/[^A-Za-z0-9._-]/g, '-').replace(/-+/g, '-').slice(-80) || 'factura';
+  return `piso-horta/${crypto.randomUUID().slice(0, 8)}-${Date.now()}-${limpio}`;
+};
+
+let uid = null, tab = 'luz', facturas = [], estrategias = [];
+
+// ── Datos ─────────────────────────────────────────────────────────────────
+async function cargar() {
+  if (!uid) return;
+  $('estado').textContent = '';
+  const [f, e] = await Promise.all([
+    sb.from('files').select('id,name,size,date,folder,user_id,bucket,storage_path')
+      .like('folder', 'Piso Horta%').order('date', { ascending: false }),
+    sb.from('piso_horta_estrategias').select('*').order('created_at', { ascending: true }),
+  ]);
+  if (f.error || e.error) { $('estado').textContent = '⚠️ ' + (f.error?.message || e.error?.message); return; }
+  facturas = f.data || [];
+  estrategias = e.data || [];
+  pinta();
+}
+
+function pinta() {
+  const por = t => facturas.filter(x => x.folder === CARPETAS[t]);
+  $('nLuz').textContent = por('luz').length;
+  $('nComida').textContent = por('comida').length;
+  $('nOtros').textContent = por('otros').length;
+  $('nAhorro').textContent = estrategias.length;
+  document.querySelectorAll('#tabs button').forEach(b => b.classList.toggle('on', b.dataset.t === tab));
+  $('vFacturas').style.display = tab === 'ahorro' ? 'none' : '';
+  $('vAhorro').style.display = tab === 'ahorro' ? '' : 'none';
+  if (tab === 'ahorro') { pintaEstr(); return; }
+  $('subTitulo').textContent = TITULOS[tab];
+  const lista = por(tab);
+  $('listaFacturas').innerHTML = lista.length
+    ? lista.map(f => `
+      <div class="fila">
+        <span class="ico">${icoDe(f.name)}</span>
+        <div class="info">
+          <p class="nom">${esc(f.name)}</p>
+          <p class="det">${esc(f.date || '')}${f.size ? ' · ' + fmtKB(Number(f.size)) : ''}</p>
+        </div>
+        ${quien(f.user_id)}
+        <button class="accion" data-abrir="${f.id}" title="Abrir / descargar">⬇️</button>
+        ${f.user_id === uid ? `<button class="accion rojo" data-borrar="${f.id}" title="Borrar">✕</button>` : ''}
+      </div>`).join('')
+    : `<div class="vacio">Sin facturas de ${tab} todavía.</div>`;
+}
+
+// ── Subir / abrir / borrar facturas ───────────────────────────────────────
+$('subirBtn').onclick = () => $('fichero').click();
+$('fichero').onchange = async e => {
+  const lista = Array.from(e.target.files || []);
+  e.target.value = '';
+  if (!lista.length) return;
+  $('subirBtn').disabled = true;
+  $('msg').textContent = 'Subiendo…';
+  let ok = 0, mal = 0;
+  for (const file of lista) {
+    try {
+      const path = rutaSegura(file.name);
+      const { error: eUp } = await sb.storage.from('archivo')
+        .upload(path, file, { contentType: file.type || 'application/octet-stream', upsert: false });
+      if (eUp) throw eUp;
+      const { error: eIns } = await sb.from('files').insert({
+        id: `web-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+        user_id: uid, name: file.name, type: file.type || 'file', size: file.size,
+        date: new Date().toISOString().slice(0, 10),
+        category: /image\//.test(file.type) ? 'image' : 'document',
+        tags: `piso-horta,factura:${tab},carpeta:${CARPETAS[tab]}`,
+        folder: CARPETAS[tab], bucket: 'archivo', storage_path: path,
+      });
+      if (eIns) throw eIns;
+      ok++;
+    } catch (err) { console.warn('[gastos] fallo subiendo', file.name, err); mal++; }
+  }
+  $('msg').textContent = mal ? `✓ ${ok} subidas · ⚠️ ${mal} fallaron` : `✓ ${ok} factura${ok === 1 ? '' : 's'} subida${ok === 1 ? '' : 's'}`;
+  $('subirBtn').disabled = false;
+  cargar();
+};
+
+$('listaFacturas').onclick = async e => {
+  const abrir = e.target.closest('[data-abrir]');
+  const borrar = e.target.closest('[data-borrar]');
+  if (abrir) {
+    const f = facturas.find(x => x.id === abrir.dataset.abrir);
+    if (!f?.storage_path) { alert('Esta factura no tiene copia que pueda abrir.'); return; }
+    const { data, error } = await sb.storage.from(f.bucket || 'archivo')
+      .createSignedUrl(f.storage_path, 300, { download: f.name });
+    if (error || !data?.signedUrl) { alert('No he podido abrirla: ' + (error?.message || 'sin enlace')); return; }
+    window.open(data.signedUrl, '_blank', 'noopener');
+  }
+  if (borrar) {
+    const f = facturas.find(x => x.id === borrar.dataset.borrar);
+    if (!f || !confirm(`¿Borrar «${f.name}»?`)) return;
+    if (f.storage_path) await sb.storage.from(f.bucket || 'archivo').remove([f.storage_path]).catch(() => {});
+    await sb.from('files').delete().eq('id', f.id);
+    cargar();
+  }
+};
+
+// ── Estrategias de ahorro ─────────────────────────────────────────────────
+const abiertas = new Set();
+function pintaEstr() {
+  $('listaEstr').innerHTML = estrategias.length
+    ? estrategias.map(it => `
+      <div class="card estr ${it.done ? 'hecha' : ''} ${abiertas.has(it.id) ? 'abierta' : ''}" data-id="${it.id}">
+        <div class="cab">
+          <button class="check ${it.done ? 'si' : ''}" data-toggle="${it.id}" title="${it.done ? 'Marcar pendiente' : 'Marcar hecha'}">✓</button>
+          <div class="tit">${esc(it.title)}<div class="por">añadió ${esc(it.created_by || '—')}</div></div>
+          <span class="flecha">▼</span>
+          <button class="accion rojo" data-del="${it.id}" title="Borrar">✕</button>
+        </div>
+        <div class="cuerpo">${esc(it.content)}</div>
+      </div>`).join('')
+    : '<div class="vacio">Sin estrategias todavía.</div>';
+}
+$('listaEstr').onclick = async e => {
+  const t = e.target.closest('[data-toggle]');
+  const d = e.target.closest('[data-del]');
+  if (t) {
+    const it = estrategias.find(x => x.id === t.dataset.toggle);
+    it.done = !it.done;
+    pintaEstr();
+    await sb.from('piso_horta_estrategias').update({ done: it.done }).eq('id', it.id);
+    return;
+  }
+  if (d) {
+    if (!confirm('¿Borrar esta estrategia?')) return;
+    await sb.from('piso_horta_estrategias').delete().eq('id', d.dataset.del);
+    cargar();
+    return;
+  }
+  const card = e.target.closest('.estr');
+  if (card) {
+    abiertas.has(card.dataset.id) ? abiertas.delete(card.dataset.id) : abiertas.add(card.dataset.id);
+    pintaEstr();
+  }
+};
+$('nuevaEstrBtn').onclick = () => $('formEstr').classList.toggle('on');
+$('eCancelar').onclick = () => $('formEstr').classList.remove('on');
+$('eGuardar').onclick = async () => {
+  const title = $('eTitulo').value.trim(), content = $('eTexto').value.trim();
+  if (!title && !content) return;
+  const { error } = await sb.from('piso_horta_estrategias').insert({
+    id: crypto.randomUUID(), title: title || 'Estrategia', content, done: false,
+    created_by: uid === UID_MONTSE ? 'Montse' : 'Carlos', created_at: new Date().toISOString(),
+  });
+  if (error) { alert('No se pudo guardar: ' + error.message); return; }
+  $('eTitulo').value = ''; $('eTexto').value = '';
+  $('formEstr').classList.remove('on');
+  cargar();
+};
+
+// ── Pestañas ──────────────────────────────────────────────────────────────
+$('tabs').onclick = e => {
+  const b = e.target.closest('button[data-t]');
+  if (!b) return;
+  tab = b.dataset.t;
+  pinta();
+};
+
+// ── Sesión (mismo flujo que calendario.html) ──────────────────────────────
+$('gbtn').onclick = async () => {
+  const { error } = await sb.auth.signInWithOAuth({
+    provider: 'google',
+    options: {
+      redirectTo: `${location.origin}${location.pathname}`,
+      queryParams: { access_type: 'offline', prompt: 'select_account' },
+    },
+  });
+  if (error) alert('No se pudo iniciar con Google: ' + error.message);
+};
+$('lbtn').onclick = async () => {
+  const { error } = await sb.auth.signInWithPassword({ email: $('lemail').value.trim(), password: $('lpass').value });
+  if (error) { alert('No se pudo entrar: ' + error.message); return; }
+  location.reload();
+};
+$('salir').onclick = async () => { await sb.auth.signOut(); location.reload(); };
+
+function aplicaSesion(session) {
+  const nuevo = session?.user?.id || null;
+  if (nuevo === uid) return;
+  uid = nuevo;
+  $('login').style.display = uid ? 'none' : 'block';
+  $('app').style.display = uid ? '' : 'none';
+  $('quienSoy').style.display = uid ? 'flex' : 'none';
+  if (uid) {
+    $('avatar').textContent = uid === UID_MONTSE ? 'M' : 'C';
+    $('avatar').classList.toggle('m', uid === UID_MONTSE);
+    cargar();
+  }
+}
+sb.auth.onAuthStateChange((_ev, session) => {
+  aplicaSesion(session);
+  if (location.hash.includes('access_token')) history.replaceState(null, '', location.pathname);
+});
+(async () => {
+  const { data: { session } } = await sb.auth.getSession();
+  aplicaSesion(session);
+  if (!session) $('login').style.display = 'block';
+})();
+</script>
+</body>
+</html>
