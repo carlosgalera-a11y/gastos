@@ -388,12 +388,22 @@ const ymLocal = d => ymdLocal(d).slice(0, 7);
 const hoy = () => ymdLocal(new Date()); // en LOCAL: toISOString() es UTC y corre el día por la noche
 const mesDe = f => (f || '').slice(0, 7);
 const MESES = ['ene', 'feb', 'mar', 'abr', 'may', 'jun', 'jul', 'ago', 'sep', 'oct', 'nov', 'dic'];
-const mesLbl = ym => { const [a, m] = ym.split('-'); return `${MESES[+m - 1]} ${a.slice(2)}`; };
-const mesLargo = ym => { const [a, m] = ym.split('-'); return `${['enero','febrero','marzo','abril','mayo','junio','julio','agosto','septiembre','octubre','noviembre','diciembre'][+m - 1]} ${a}`; };
+const mesLbl = ym => { if (!ym) return 'sin fecha'; const [a, m] = ym.split('-'); return `${MESES[+m - 1] || '?'} ${a.slice(2)}`; };
+const mesLargo = ym => { if (!ym) return 'Sin fecha'; const [a, m] = ym.split('-'); return `${['enero','febrero','marzo','abril','mayo','junio','julio','agosto','septiembre','octubre','noviembre','diciembre'][+m - 1] || '?'} ${a}`; };
 const fmtKB = b => !b ? '' : b < 1048576 ? `${Math.max(1, Math.round(b / 1024))} KB` : `${(b / 1048576).toFixed(1)} MB`;
 const quienHtml = uid => uid === UID_MONTSE ? '<span class="quien m" title="Montse">M</span>' : '<span class="quien" title="Carlos">C</span>';
 const icoDe = n => /\.(png|jpe?g|gif|webp|heic)$/i.test(n) ? '🖼️' : /\.(xlsx?|csv)$/i.test(n) ? '📊' : '📄';
-const numDe = v => { const n = parseFloat(String(v).trim().replace(',', '.')); return isFinite(n) && n > 0 ? Math.round(n * 100) / 100 : null; };
+// Importes a la española: «1.100,50» con parseFloat a secas se truncaba a 1,1.
+const numDe = v => {
+  const s = String(v ?? '').trim().replace(/[€\s]/g, '');
+  if (!s) return null;
+  let n;
+  if (/,\d{1,2}$/.test(s)) n = parseFloat(s.replace(/\./g, '').replace(',', '.'));
+  else if (/\.\d{1,2}$/.test(s)) n = parseFloat(s.replace(/,/g, ''));
+  else if (/^\d{1,3}(\.\d{3})+$/.test(s)) n = parseFloat(s.replace(/\./g, ''));
+  else n = parseFloat(s.replace(',', '.'));
+  return isFinite(n) && n > 0 ? Math.round(n * 100) / 100 : null;
+};
 const yo = () => uid === UID_MONTSE ? 'montse' : 'carlos';
 
 /** Nombre seguro para Storage (sin acentos/espacios), como en FileHub. */
@@ -634,10 +644,10 @@ function pintaMovimientos() {
         <span class="quien ${g.paid_by === 'montse' ? 'm' : ''}" title="Pagó ${PERSONA[g.paid_by]?.label}">${g.paid_by === 'montse' ? 'M' : 'C'}</span>
         <div class="info">
           <p class="tt">${esAj ? '💸 ' : ''}${esc(g.title)}</p>
-          <p class="dd">${g.fecha?.slice(8, 10)}/${g.fecha?.slice(5, 7)}${cat ? ` · <span class="catdot" style="background:${cat.color}"></span>${cat.label}` : ''} · ${repartoTxt}</p>
+          <p class="dd">${g.fecha ? `${g.fecha.slice(8, 10)}/${g.fecha.slice(5, 7)}` : 's/f'}${cat ? ` · <span class="catdot" style="background:${cat.color}"></span>${cat.label}` : ''} · ${repartoTxt}</p>
         </div>
         <span class="imp">${eur(g.amount)}</span>
-        <button class="accion rojo" data-delg="${g.id}" title="Borrar">✕</button>
+        <button class="accion rojo" data-delg="${esc(g.id)}" title="Borrar">✕</button>
       </div>`;
   }).join('');
 }
@@ -663,8 +673,16 @@ $('gAdd').onclick = async () => {
     paid_by: pago, beneficiario: para, fecha: $('gFecha').value || hoy(),
   });
   $('gTitulo').value = ''; $('gImporte').value = '';
+  fechaTocada = false; $('gFecha').value = hoy();
 };
 ['gTitulo', 'gImporte'].forEach(id => $(id).addEventListener('keydown', e => { if (e.key === 'Enter') $('gAdd').click(); }));
+// La PWA instalada vive días sin recargarse: al volver a primer plano se
+// refresca la fecha por defecto (solo si nadie la ha cambiado a mano).
+let fechaTocada = false;
+$('gFecha').addEventListener('input', () => { fechaTocada = true; });
+document.addEventListener('visibilitychange', () => {
+  if (document.visibilityState === 'visible' && !fechaTocada) $('gFecha').value = hoy();
+});
 $('segPago').onclick = e => { const b = e.target.closest('button'); if (!b) return; pago = b.dataset.v; document.querySelectorAll('#segPago button').forEach(x => x.classList.toggle('on', x === b)); };
 $('segPara').onclick = e => { const b = e.target.closest('button'); if (!b) return; para = b.dataset.v; document.querySelectorAll('#segPara button').forEach(x => x.classList.toggle('on', x === b)); };
 $('saldarBtn').onclick = async () => {
@@ -682,7 +700,10 @@ $('listaGastos').onclick = async e => {
   const g = gastos.find(x => x.id === b.dataset.delg);
   if (!g || !confirm(`¿Borrar «${g.title}» (${eur(g.amount)})?`)) return;
   gastos = gastos.filter(x => x.id !== g.id); pinta();
-  if (!DEMO) await sb.from('piso_horta_gastos').delete().eq('id', g.id);
+  if (!DEMO) {
+    const { error } = await sb.from('piso_horta_gastos').delete().eq('id', g.id);
+    if (error) { alert('No se pudo borrar: ' + error.message); cargar(); }
+  }
 };
 
 // ══ FACTURAS ══════════════════════════════════════════════════════════════
@@ -698,8 +719,8 @@ function pintaFacturas() {
           <p class="det">${esc(f.date || '')}${f.size ? ' · ' + fmtKB(Number(f.size)) : ''}</p>
         </div>
         ${quienHtml(f.user_id)}
-        <button class="accion" data-abrir="${f.id}" title="Abrir / descargar">⬇️</button>
-        ${f.user_id === uid ? `<button class="accion rojo" data-borrar="${f.id}" title="Borrar">✕</button>` : ''}
+        <button class="accion" data-abrir="${esc(f.id)}" title="Abrir / descargar">⬇️</button>
+        ${f.user_id === uid ? `<button class="accion rojo" data-borrar="${esc(f.id)}" title="Borrar">✕</button>` : ''}
       </div>`).join('')
     : `<div class="vacio">Sin facturas de ${tab} todavía.</div>`;
 }
@@ -769,12 +790,12 @@ const abiertas = new Set();
 function pintaEstr() {
   $('listaEstr').innerHTML = estrategias.length
     ? estrategias.map(it => `
-      <div class="card estr ${it.done ? 'hecha' : ''} ${abiertas.has(it.id) ? 'abierta' : ''}" data-id="${it.id}">
+      <div class="card estr ${it.done ? 'hecha' : ''} ${abiertas.has(it.id) ? 'abierta' : ''}" data-id="${esc(it.id)}">
         <div class="cab">
-          <button class="check ${it.done ? 'si' : ''}" data-toggle="${it.id}" title="${it.done ? 'Marcar pendiente' : 'Marcar hecha'}">✓</button>
+          <button class="check ${it.done ? 'si' : ''}" data-toggle="${esc(it.id)}" title="${it.done ? 'Marcar pendiente' : 'Marcar hecha'}">✓</button>
           <div class="tit">${esc(it.title)}<div class="por">añadió ${esc(it.created_by || '—')}</div></div>
           <span class="flecha">▼</span>
-          <button class="accion rojo" data-del="${it.id}" title="Borrar">✕</button>
+          <button class="accion rojo" data-del="${esc(it.id)}" title="Borrar">✕</button>
         </div>
         <div class="cuerpo">${esc(it.content)}</div>
       </div>`).join('')

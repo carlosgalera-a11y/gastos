@@ -4,7 +4,7 @@
  * (van a Supabase con sesión); solo la página y las fuentes.
  * Sube CACHE_VERSION en cada cambio de index.html.
  */
-const CACHE_VERSION = 'gastos-v2';
+const CACHE_VERSION = 'gastos-v3';
 
 self.addEventListener('install', e => {
   e.waitUntil(caches.open(CACHE_VERSION).then(c => c.addAll(['./', './index.html'])).then(() => self.skipWaiting()));
@@ -21,8 +21,12 @@ self.addEventListener('fetch', e => {
   if (e.request.mode === 'navigate' || url.pathname.endsWith('/index.html')) {
     e.respondWith(
       fetch(e.request).then(r => {
-        const copia = r.clone();
-        caches.open(CACHE_VERSION).then(c => c.put('./index.html', copia));
+        // Solo se cachea una respuesta buena: un error o una redirección
+        // guardados aquí dejarían la PWA rota para siempre.
+        if (r.ok && !r.redirected) {
+          const copia = r.clone();
+          caches.open(CACHE_VERSION).then(c => c.put('./index.html', copia));
+        }
         return r;
       }).catch(() => caches.match('./index.html'))
     );
@@ -32,8 +36,11 @@ self.addEventListener('fetch', e => {
   if (/fonts\.(googleapis|gstatic)\.com/.test(url.host) || /\.(png|webmanifest)$/.test(url.pathname)) {
     e.respondWith(
       caches.match(e.request).then(hit => hit || fetch(e.request).then(r => {
-        const copia = r.clone();
-        caches.open(CACHE_VERSION).then(c => c.put(e.request, copia));
+        // Un 404/503 cacheado en caché-primero se serviría para siempre.
+        if (r.ok) {
+          const copia = r.clone();
+          caches.open(CACHE_VERSION).then(c => c.put(e.request, copia));
+        }
         return r;
       }))
     );
