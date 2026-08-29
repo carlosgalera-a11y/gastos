@@ -102,6 +102,38 @@
   .seg button { flex: 1; border: none; background: transparent; color: var(--muted); font-weight: 700; font-size: 12.5px; padding: 8px 4px; border-radius: 9px; }
   .seg button.on { background: var(--card3); color: var(--ink); box-shadow: 0 1px 3px rgba(0,0,0,.3); }
   .seg .tag { font-size: 10px; display: block; font-weight: 500; color: var(--soft); }
+
+  /* ── v4 · Interfaz estilo Tricount ─────────────────────────────── */
+  .subvistas { margin: 2px 0 10px; }
+  .subvistas button { font-size: 13.5px; padding: 9px 4px; }
+  .statstri { display: flex; text-align: center; padding: 14px 8px; }
+  .statstri > div { flex: 1; }
+  .statstri .lbl { font-size: 11px; color: var(--muted); font-weight: 600; text-transform: uppercase; letter-spacing: .04em; }
+  .statstri .big { font-family: 'Hanken Grotesk', sans-serif; font-size: 22px; font-weight: 800; letter-spacing: -.02em; margin-top: 2px; }
+  .diahdr { font-family: 'Hanken Grotesk', sans-serif; font-weight: 800; font-size: 15px; margin: 16px 2px 7px; }
+  .movtri { display: flex; align-items: center; gap: 11px; background: var(--card); border: 1px solid var(--line); border-radius: 14px; padding: 11px 12px; margin-bottom: 8px; }
+  .movtri .emo { width: 40px; height: 40px; border-radius: 12px; flex: none; display: flex; align-items: center; justify-content: center; font-size: 19px; background: var(--card3); }
+  .movtri .info { flex: 1; min-width: 0; }
+  .movtri .tt { font-weight: 700; font-size: 14.5px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .movtri .dd { font-size: 11px; color: var(--muted); margin-top: 1px; }
+  .movtri .dd b { color: var(--ink); font-weight: 600; }
+  .movtri .imp { font-weight: 800; font-size: 14.5px; white-space: nowrap; }
+  .movtri .accion { opacity: .55; }
+  .movtri.ajuste { opacity: .8; border-style: dashed; }
+  .saldofila { display: flex; align-items: center; gap: 11px; background: var(--card2); border-radius: 12px; padding: 11px 12px; margin-top: 8px; }
+  .saldofila .avatarS { width: 34px; height: 34px; border-radius: 50%; flex: none; display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 13px; color: #0b1326; background: var(--p-carlos); }
+  .saldofila .avatarS.m { background: var(--p-montse); }
+  .saldofila .nom { flex: 1; font-weight: 700; font-size: 14px; }
+  .saldofila .nom .subn { display: block; font-size: 10.5px; color: var(--soft); font-weight: 500; }
+  .saldofila .cant { font-weight: 800; font-size: 15px; }
+  .pos { color: var(--mint); }
+  .neg { color: #f87171; }
+  .fab { position: fixed; left: 50%; transform: translateX(-50%); bottom: calc(16px + env(safe-area-inset-bottom)); background: var(--peri); color: #fff; border: none; border-radius: 999px; padding: 13px 22px; font-weight: 800; font-size: 14px; box-shadow: 0 6px 20px rgba(0,0,0,.45); z-index: 40; cursor: pointer; }
+  .hoja { position: fixed; inset: 0; background: rgba(4,8,18,.62); z-index: 50; display: flex; align-items: flex-end; justify-content: center; }
+  .hoja .card.form { width: min(560px, 100%); margin: 0; border-radius: 20px 20px 0 0; max-height: 86vh; overflow: auto; padding-bottom: calc(16px + env(safe-area-inset-bottom)); }
+  .hoja h2 { display: flex; justify-content: space-between; align-items: center; }
+  #cerrarHoja { border: none; background: var(--card3); color: var(--muted); width: 28px; height: 28px; border-radius: 50%; font-size: 13px; cursor: pointer; }
+  #svGastos { padding-bottom: 78px; } /* que el botón flotante no tape la lista */
   #gAdd { width: 100%; margin-top: 10px; }
   .etiq { font-size: 10.5px; font-weight: 700; text-transform: uppercase; letter-spacing: .07em; color: var(--soft); margin: 10px 0 4px; }
 
@@ -250,68 +282,88 @@
 
     <!-- ══ GASTOS (estilo Tricount) ══ -->
     <div id="vGastos">
-      <div class="card" id="balanceCard">
-        <p id="balanceTitulo">Balance del piso</p>
-        <div id="balanceHero">—</div>
-        <p id="balanceSub"></p>
-        <div id="aportes"></div>
-        <button class="btn mini" id="saldarBtn" style="display:none">💸 Saldar cuentas</button>
+      <div class="seg subvistas" id="segVista">
+        <button data-v="gastos" class="on">Gastos</button>
+        <button data-v="saldos">Saldos</button>
       </div>
 
-      <div class="card form">
-        <h2>Añadir gasto</h2>
-        <input id="gTitulo" placeholder="Concepto (ej: Compra Mercadona, Factura luz agosto…)">
-        <div class="fila2">
-          <input id="gImporte" placeholder="Importe €" inputmode="decimal">
-          <input id="gFecha" type="date">
+      <!-- Subvista GASTOS: totales + lista por días, como Tricount -->
+      <div id="svGastos">
+        <div class="card statstri">
+          <div><p class="lbl">Mis gastos</p><div class="big" id="misGastos">—</div></div>
+          <div><p class="lbl">Gastos totales</p><div class="big" id="gastosTotales">—</div></div>
         </div>
-        <div class="fila2">
-          <select id="gCategoria">
-            <option value="comida">🛒 Comida</option>
-            <option value="luz">⚡ Luz</option>
-            <option value="alquiler">🔑 Alquiler y fijos</option>
-            <option value="casa">🛋️ Casa</option>
-            <option value="otros">📦 Otros</option>
-          </select>
-          <div></div>
-        </div>
-        <p class="etiq">Pagó</p>
-        <div class="seg" id="segPago">
-          <button data-v="carlos" class="on">Carlos</button>
-          <button data-v="montse">Montse</button>
-        </div>
-        <p class="etiq">Para</p>
-        <div class="seg" id="segPara">
-          <button data-v="ambos" class="on">Los dos<span class="tag">a medias</span></button>
-          <button data-v="carlos">Solo Carlos</button>
-          <button data-v="montse">Solo Montse</button>
-        </div>
-        <button class="btn" id="gAdd">＋ Añadir gasto</button>
-      </div>
-
-      <div class="card">
-        <h2>Este mes <span class="sub" id="mesActualLbl"></span></h2>
-        <div id="heroMes">0 €</div>
-        <p id="heroMesSub"></p>
-        <div class="chartbox" id="chartMes"></div>
-        <div class="leyenda" id="legMes"></div>
-      </div>
-
-      <div class="card">
-        <h2>Últimos 6 meses <span class="sub">por categoría</span></h2>
-        <div class="chartbox" id="chart6m"></div>
-        <div class="leyenda" id="leg6m"></div>
-      </div>
-
-      <div class="card">
-        <h2>Resumen mensual <span class="sub">tabla</span></h2>
-        <div class="tscroll" id="tablaMeses"></div>
-      </div>
-
-      <div class="card">
-        <h2>Movimientos</h2>
         <div id="listaGastos"><div class="vacio">Cargando…</div></div>
       </div>
+
+      <!-- Subvista SALDOS: quién debe a quién + resúmenes y gráficos -->
+      <div id="svSaldos" style="display:none">
+        <div class="card" id="balanceCard">
+          <div id="balanceHero">—</div>
+          <p id="balanceSub"></p>
+          <button class="btn mini" id="saldarBtn" style="display:none">💸 Saldar cuentas</button>
+        </div>
+
+        <div class="card">
+          <h2>Saldos</h2>
+          <div id="saldosLista"></div>
+          <div id="aportes"></div>
+        </div>
+
+        <div class="card">
+          <h2>Este mes <span class="sub" id="mesActualLbl"></span></h2>
+          <div id="heroMes">0 €</div>
+          <p id="heroMesSub"></p>
+          <div class="chartbox" id="chartMes"></div>
+          <div class="leyenda" id="legMes"></div>
+        </div>
+
+        <div class="card">
+          <h2>Últimos 6 meses <span class="sub">por categoría</span></h2>
+          <div class="chartbox" id="chart6m"></div>
+          <div class="leyenda" id="leg6m"></div>
+        </div>
+
+        <div class="card">
+          <h2>Resumen mensual <span class="sub">tabla</span></h2>
+          <div class="tscroll" id="tablaMeses"></div>
+        </div>
+      </div>
+
+      <!-- Alta de gasto: hoja inferior que abre el botón flotante -->
+      <div class="hoja" id="hojaGasto" style="display:none">
+        <div class="card form">
+          <h2>Añadir gasto <button id="cerrarHoja" title="Cerrar">✕</button></h2>
+          <input id="gTitulo" placeholder="Concepto (ej: Compra Mercadona, Factura luz agosto…)">
+          <div class="fila2">
+            <input id="gImporte" placeholder="Importe €" inputmode="decimal">
+            <input id="gFecha" type="date">
+          </div>
+          <div class="fila2">
+            <select id="gCategoria">
+              <option value="comida">🛒 Comida</option>
+              <option value="luz">⚡ Luz</option>
+              <option value="alquiler">🔑 Alquiler y fijos</option>
+              <option value="casa">🛋️ Casa</option>
+              <option value="otros">📦 Otros</option>
+            </select>
+            <div></div>
+          </div>
+          <p class="etiq">Pagó</p>
+          <div class="seg" id="segPago">
+            <button data-v="carlos" class="on">Carlos</button>
+            <button data-v="montse">Montse</button>
+          </div>
+          <p class="etiq">Para</p>
+          <div class="seg" id="segPara">
+            <button data-v="ambos" class="on">Los dos<span class="tag">a medias</span></button>
+            <button data-v="carlos">Solo Carlos</button>
+            <button data-v="montse">Solo Montse</button>
+          </div>
+          <button class="btn" id="gAdd">＋ Añadir gasto</button>
+        </div>
+      </div>
+      <button class="fab" id="fabAdd">＋ Añadir gasto</button>
     </div>
 
     <!-- ══ FACTURAS ══ -->
@@ -415,6 +467,27 @@ const rutaSegura = nombre => {
 
 let uid = null, tab = 'gastos', facturas = [], estrategias = [], gastos = [];
 let pago = 'carlos', para = 'ambos';
+// Subvista del apartado Gastos (estilo Tricount): lista o saldos.
+let vista = (() => { try { return localStorage.getItem('fh_gastos_vista') || 'gastos'; } catch { return 'gastos'; } })();
+
+/** «25 ago 2026», como las cabeceras de día de Tricount. */
+const diaLbl = f => f ? `${+f.slice(8, 10)} ${MESES[+f.slice(5, 7) - 1] || '?'} ${f.slice(0, 4)}` : 'Sin fecha';
+
+/** Emoji de un movimiento: primero por palabras del concepto, si no por categoría. */
+const EMO_CAT = { alquiler: '🔑', luz: '⚡', comida: '🛒', casa: '🛋️', otros: '💶', ajuste: '💸' };
+function emojiDe(g) {
+  const q = sinAcentos(g.title || '');
+  if (/gasolina|benzina|diesel|combustible|repostaje/.test(q)) return '⛽';
+  if (/peatge|peaje|tunel|autopista|parking|aparcamiento|zona azul/.test(q)) return '🚗';
+  if (/sushi|japo/.test(q)) return '🍣';
+  if (/dinar|sopar|cena|restaurante|menu|comer fuera|bar\b/.test(q)) return '🍽️';
+  if (/cafe|desayun|brunch/.test(q)) return '☕';
+  if (/farmacia|medic/.test(q)) return '💊';
+  if (/tren|renfe|metro|bus\b|tmb|bicing/.test(q)) return '🚆';
+  if (/cine|entrada|concierto|teatro/.test(q)) return '🎟️';
+  return EMO_CAT[g.category] || '💶';
+}
+const sinAcentos = s => String(s || '').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '');
 
 // ── Matemática del reparto (estilo Tricount, 2 personas) ──────────────────
 // share: lo que le toca pagar a p de un gasto. balance>0 → le deben.
@@ -509,24 +582,55 @@ function pinta() {
 
 // ══ GASTOS ════════════════════════════════════════════════════════════════
 function pintaGastos() {
-  const balC = balanceDe(gastos, 'carlos');
-  // Balance hero. Umbral 1 céntimo: un pago real no puede afinar más, y así
-  // tras «saldar» no queda un 0,01 € fantasma por el redondeo de las medias.
+  // Subvistas estilo Tricount: Gastos (lista) / Saldos (quién debe a quién).
+  document.querySelectorAll('#segVista button').forEach(b => b.classList.toggle('on', b.dataset.v === vista));
+  $('svGastos').style.display = vista === 'gastos' ? '' : 'none';
+  $('svSaldos').style.display = vista === 'saldos' ? '' : 'none';
+
+  const yoP = yo(), otroP = yoP === 'carlos' ? 'montse' : 'carlos';
+  const balYo = balanceDe(gastos, yoP);
+  const reales = gastos.filter(esGasto);
+
+  // ── Subvista GASTOS: totales arriba + movimientos por día ──
+  const misG = reales.filter(g => g.paid_by === yoP).reduce((s, g) => s + g.amount, 0);
+  const totG = reales.reduce((s, g) => s + g.amount, 0);
+  $('misGastos').textContent = eur(misG);
+  $('gastosTotales').textContent = eur(totG);
+  pintaMovimientos();
+
+  // ── Subvista SALDOS: hero en primera persona, como Tricount ──
+  // Umbral 1 céntimo: un pago real no puede afinar más, y así tras «saldar»
+  // no queda un 0,01 € fantasma por el redondeo de las medias.
   const hero = $('balanceHero'), sub = $('balanceSub');
-  if (Math.abs(balC) < 0.01) {
+  if (Math.abs(balYo) < 0.01) {
     hero.textContent = 'Estáis en paz ✓'; hero.style.color = 'var(--mint)';
     sub.textContent = 'Nadie debe nada a nadie.';
     $('saldarBtn').style.display = 'none';
   } else {
-    const deudor = balC > 0 ? 'montse' : 'carlos';
-    const acreedor = balC > 0 ? 'carlos' : 'montse';
-    hero.textContent = eur(Math.abs(balC)); hero.style.color = 'var(--ink)';
-    sub.innerHTML = `<b style="color:${PERSONA[deudor].color}">${PERSONA[deudor].label}</b> le debe esto a <b style="color:${PERSONA[acreedor].color}">${PERSONA[acreedor].label}</b>`;
+    const debo = balYo < 0;
+    hero.textContent = `${debo ? 'Debes' : 'Te deben'} ${eur(Math.abs(balYo))}`;
+    hero.style.color = 'var(--ink)';
+    sub.innerHTML = debo
+      ? `A <b style="color:${PERSONA[otroP].color}">${PERSONA[otroP].label}</b> 💸`
+      : `<b style="color:${PERSONA[otroP].color}">${PERSONA[otroP].label}</b> te lo debe`;
+    const deudor = balYo < 0 ? yoP : otroP;
+    const acreedor = balYo < 0 ? otroP : yoP;
     $('saldarBtn').style.display = '';
-    $('saldarBtn').textContent = `💸 Saldar: ${PERSONA[deudor].label} paga ${eur(Math.abs(balC))} a ${PERSONA[acreedor].label}`;
+    $('saldarBtn').textContent = `💸 Saldar: ${PERSONA[deudor].label} paga ${eur(Math.abs(balYo))} a ${PERSONA[acreedor].label}`;
   }
+
+  // Lista de saldos por persona (+ verde / − rojo, como Tricount)
+  $('saldosLista').innerHTML = ['carlos', 'montse'].map(p => {
+    const b = balanceDe(gastos, p);
+    const cero = Math.abs(b) < 0.01;
+    return `<div class="saldofila">
+      <div class="avatarS ${p === 'montse' ? 'm' : ''}">${p === 'montse' ? 'M' : 'C'}</div>
+      <div class="nom">${PERSONA[p].label}${p === yoP ? '<span class="subn">yo</span>' : ''}</div>
+      <div class="cant ${cero ? '' : b > 0 ? 'pos' : 'neg'}">${cero ? '0,00 €' : (b > 0 ? '+' : '−') + eur(Math.abs(b))}</div>
+    </div>`;
+  }).join('');
+
   // Aportado por cada uno (solo gastos reales, no ajustes)
-  const reales = gastos.filter(esGasto);
   const apC = reales.filter(g => g.paid_by === 'carlos').reduce((s, g) => s + g.amount, 0);
   const apM = reales.filter(g => g.paid_by === 'montse').reduce((s, g) => s + g.amount, 0);
   const maxAp = Math.max(apC, apM, 1);
@@ -540,7 +644,6 @@ function pintaGastos() {
   pintaMesActual(reales, ymNow);
   pinta6Meses(reales);
   pintaTabla(reales);
-  pintaMovimientos();
 }
 
 /** Barra apilada horizontal 100% del mes + leyenda con importes. */
@@ -627,24 +730,28 @@ function pintaTabla(reales) {
 }
 
 function pintaMovimientos() {
+  // Lista estilo Tricount: agrupada por DÍA («25 ago 2026»), cada fila con su
+  // emoji, el concepto y «Pagado por …».
   const box = $('listaGastos');
-  if (!gastos.length) { box.innerHTML = '<div class="vacio">Sin movimientos todavía. Añade el primero arriba.</div>'; return; }
+  if (!gastos.length) { box.innerHTML = '<div class="vacio">Sin movimientos todavía. Añade el primero con el botón de abajo.</div>'; return; }
+  const yoP = yo();
   const orden = [...gastos].sort((a, b) => (b.fecha || '').localeCompare(a.fecha || '') || String(b.created_at || '').localeCompare(String(a.created_at || '')));
   let ult = '';
   box.innerHTML = orden.map(g => {
-    const ym = mesDe(g.fecha);
-    const sep = ym !== ult ? `<div class="mes-sep">${mesLargo(ym)}</div>` : '';
-    ult = ym;
+    const dia = g.fecha || '';
+    const sep = dia !== ult ? `<div class="diahdr">${diaLbl(dia)}</div>` : '';
+    ult = dia;
     const esAj = g.category === 'ajuste';
     const cat = CAT[g.category];
-    const repartoTxt = esAj ? `ajuste → ${PERSONA[g.beneficiario]?.label || ''}`
-      : g.beneficiario === 'ambos' ? 'a medias' : `solo ${PERSONA[g.beneficiario]?.label || ''}`;
+    const pagadoPor = `Pagado por <b style="color:${PERSONA[g.paid_by]?.color || 'var(--ink)'}">${PERSONA[g.paid_by]?.label || '?'}${g.paid_by === yoP ? ' (yo)' : ''}</b>`;
+    const repartoTxt = esAj ? ` · ajuste → ${PERSONA[g.beneficiario]?.label || ''}`
+      : g.beneficiario === 'ambos' ? '' : ` · solo ${PERSONA[g.beneficiario]?.label || ''}`;
     return sep + `
-      <div class="mov ${esAj ? 'ajuste' : ''}">
-        <span class="quien ${g.paid_by === 'montse' ? 'm' : ''}" title="Pagó ${PERSONA[g.paid_by]?.label}">${g.paid_by === 'montse' ? 'M' : 'C'}</span>
+      <div class="movtri ${esAj ? 'ajuste' : ''}">
+        <div class="emo" title="${cat ? cat.label : g.category}">${emojiDe(g)}</div>
         <div class="info">
-          <p class="tt">${esAj ? '💸 ' : ''}${esc(g.title)}</p>
-          <p class="dd">${g.fecha ? `${g.fecha.slice(8, 10)}/${g.fecha.slice(5, 7)}` : 's/f'}${cat ? ` · <span class="catdot" style="background:${cat.color}"></span>${cat.label}` : ''} · ${repartoTxt}</p>
+          <p class="tt">${esc(g.title)}</p>
+          <p class="dd">${pagadoPor}${repartoTxt}</p>
         </div>
         <span class="imp">${eur(g.amount)}</span>
         <button class="accion rojo" data-delg="${esc(g.id)}" title="Borrar">✕</button>
@@ -674,6 +781,7 @@ $('gAdd').onclick = async () => {
   });
   $('gTitulo').value = ''; $('gImporte').value = '';
   fechaTocada = false; $('gFecha').value = hoy();
+  $('hojaGasto').style.display = 'none'; // la hoja se cierra al apuntar
 };
 ['gTitulo', 'gImporte'].forEach(id => $(id).addEventListener('keydown', e => { if (e.key === 'Enter') $('gAdd').click(); }));
 // La PWA instalada vive días sin recargarse: al volver a primer plano se
@@ -685,6 +793,18 @@ document.addEventListener('visibilitychange', () => {
 });
 $('segPago').onclick = e => { const b = e.target.closest('button'); if (!b) return; pago = b.dataset.v; document.querySelectorAll('#segPago button').forEach(x => x.classList.toggle('on', x === b)); };
 $('segPara').onclick = e => { const b = e.target.closest('button'); if (!b) return; para = b.dataset.v; document.querySelectorAll('#segPara button').forEach(x => x.classList.toggle('on', x === b)); };
+
+// Subvistas Gastos/Saldos + hoja de alta (estilo Tricount)
+$('segVista').onclick = e => {
+  const b = e.target.closest('button'); if (!b) return;
+  vista = b.dataset.v;
+  try { localStorage.setItem('fh_gastos_vista', vista); } catch { /* sin storage */ }
+  pintaGastos();
+};
+const abreHoja = si => { $('hojaGasto').style.display = si ? 'flex' : 'none'; if (si) $('gTitulo').focus(); };
+$('fabAdd').onclick = () => abreHoja(true);
+$('cerrarHoja').onclick = () => abreHoja(false);
+$('hojaGasto').onclick = e => { if (e.target.id === 'hojaGasto') abreHoja(false); };
 $('saldarBtn').onclick = async () => {
   const balC = balanceDe(gastos, 'carlos');
   if (Math.abs(balC) < 0.01) return;

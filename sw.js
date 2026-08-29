@@ -4,7 +4,7 @@
  * (van a Supabase con sesión); solo la página y las fuentes.
  * Sube CACHE_VERSION en cada cambio de index.html.
  */
-const CACHE_VERSION = 'gastos-v3';
+const CACHE_VERSION = 'gastos-v4';
 
 self.addEventListener('install', e => {
   e.waitUntil(caches.open(CACHE_VERSION).then(c => c.addAll(['./', './index.html'])).then(() => self.skipWaiting()));
