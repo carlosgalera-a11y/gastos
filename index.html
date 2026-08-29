@@ -588,7 +588,12 @@ function pintaGastos() {
   $('svSaldos').style.display = vista === 'saldos' ? '' : 'none';
 
   const yoP = yo(), otroP = yoP === 'carlos' ? 'montse' : 'carlos';
-  const balYo = balanceDe(gastos, yoP);
+  // Con 2 personas el saldo de una es EXACTAMENTE el negativo de la otra:
+  // se calcula uno, se redondea a céntimos y el otro se deriva — si no, los
+  // medios céntimos podían pintar «+1234,25 / −1234,26».
+  const balCar = Math.round(balanceDe(gastos, 'carlos') * 100) / 100;
+  const balDe = p => p === 'carlos' ? balCar : -balCar;
+  const balYo = balDe(yoP);
   const reales = gastos.filter(esGasto);
 
   // ── Subvista GASTOS: totales arriba + movimientos por día ──
@@ -621,7 +626,7 @@ function pintaGastos() {
 
   // Lista de saldos por persona (+ verde / − rojo, como Tricount)
   $('saldosLista').innerHTML = ['carlos', 'montse'].map(p => {
-    const b = balanceDe(gastos, p);
+    const b = balDe(p);
     const cero = Math.abs(b) < 0.01;
     return `<div class="saldofila">
       <div class="avatarS ${p === 'montse' ? 'm' : ''}">${p === 'montse' ? 'M' : 'C'}</div>
