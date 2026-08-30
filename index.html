@@ -48,6 +48,9 @@
   .avatar { width: 30px; height: 30px; border-radius: 50%; background: var(--p-carlos); color: #0b1326; font-weight: 800; font-size: 13px; display: flex; align-items: center; justify-content: center; }
   .avatar.m { background: var(--p-montse); }
   #salir { border: 1px solid var(--line); background: var(--card); color: var(--muted); border-radius: 9px; padding: 6px 10px; font-size: 12px; font-weight: 600; }
+  #recargar { border: 1px solid var(--line); background: var(--card); color: var(--muted); border-radius: 9px; padding: 5px 9px; font-size: 13px; cursor: pointer; }
+  #recargar.girando { animation: girar 1s linear infinite; }
+  @keyframes girar { to { transform: rotate(360deg); } }
   #salir:hover { color: var(--ink); border-color: var(--line2); }
   #demoBadge { display: none; font-size: 10px; font-weight: 800; letter-spacing: .08em; color: var(--ambar); border: 1px solid #F59E0B55; border-radius: 999px; padding: 2px 9px; }
 
@@ -134,6 +137,26 @@
   .hoja h2 { display: flex; justify-content: space-between; align-items: center; }
   #cerrarHoja { border: none; background: var(--card3); color: var(--muted); width: 28px; height: 28px; border-radius: 50%; font-size: 13px; cursor: pointer; }
   #svGastos { padding-bottom: 78px; } /* que el botón flotante no tape la lista */
+
+  /* ── v6 · Asistente de alta y notas ────────────────────────────── */
+  .asispaso { font-size: 10.5px; font-weight: 700; color: var(--soft); text-transform: uppercase; letter-spacing: .06em; margin: 10px 0 2px; }
+  .asispreg { font-family: 'Hanken Grotesk', sans-serif; font-size: 17px; font-weight: 800; margin: 2px 0 10px; }
+  .asisops { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; }
+  .asisops.una { grid-template-columns: 1fr; }
+  .asisops button { border: 1px solid var(--line2); background: var(--card2); color: var(--ink); border-radius: 12px; padding: 13px 10px; font-size: 13.5px; font-weight: 700; cursor: pointer; text-align: center; }
+  .asisops button .em { display: block; font-size: 20px; margin-bottom: 3px; }
+  .asisops button:active { background: var(--card3); }
+  .asisatras { border: none; background: transparent; color: var(--muted); font-size: 12.5px; font-weight: 700; padding: 8px 2px; cursor: pointer; }
+  .asisresumen { background: var(--card2); border: 1px solid var(--line); border-radius: 12px; padding: 12px; margin-bottom: 10px; }
+  .asisresumen .fila { display: flex; justify-content: space-between; font-size: 13px; padding: 3px 0; }
+  .asisresumen .fila span:first-child { color: var(--muted); }
+  .nota { display: flex; align-items: flex-start; gap: 10px; background: var(--card); border: 1px solid var(--line); border-radius: 14px; padding: 12px; margin-bottom: 8px; }
+  .nota .emo { font-size: 18px; flex: none; margin-top: 1px; }
+  .nota .cuerpo { flex: 1; min-width: 0; font-size: 13.5px; line-height: 1.45; overflow-wrap: break-word; }
+  .nota .meta { font-size: 10.5px; color: var(--soft); margin-top: 4px; }
+  .nota.hecha .cuerpo { text-decoration: line-through; opacity: .6; }
+  .nota .check { border: 1.5px solid var(--line2); background: transparent; color: transparent; width: 22px; height: 22px; border-radius: 7px; flex: none; cursor: pointer; font-size: 12px; line-height: 1; }
+  .nota .check.si { background: var(--mint); border-color: var(--mint); color: #0b1326; }
   #gAdd { width: 100%; margin-top: 10px; }
   .etiq { font-size: 10.5px; font-weight: 700; text-transform: uppercase; letter-spacing: .07em; color: var(--soft); margin: 10px 0 4px; }
 
@@ -248,6 +271,7 @@
     </div>
     <span id="demoBadge">DEMO</span>
     <div id="quienSoy">
+      <button id="recargar" title="Actualizar gastos y facturas">🔄</button>
       <div class="avatar" id="avatar">·</div>
       <button id="salir">Salir</button>
     </div>
@@ -275,6 +299,7 @@
       <button data-t="luz">⚡ Luz <span class="n" id="nLuz">0</span></button>
       <button data-t="comida">🛒 Comida <span class="n" id="nComida">0</span></button>
       <button data-t="otros">📦 Otros <span class="n" id="nOtros">0</span></button>
+      <button data-t="notas">🗒️ Notas <span class="n" id="nNotas">0</span></button>
       <button data-t="ahorro">🐷 Ahorro <span class="n" id="nAhorro">0</span></button>
     </div>
 
@@ -284,6 +309,7 @@
     <div id="vGastos">
       <div class="seg subvistas" id="segVista">
         <button data-v="gastos" class="on">Gastos</button>
+        <button data-v="tabla">Tabla</button>
         <button data-v="saldos">Saldos</button>
       </div>
 
@@ -294,6 +320,18 @@
           <div><p class="lbl">Gastos totales</p><div class="big" id="gastosTotales">—</div></div>
         </div>
         <div id="listaGastos"><div class="vacio">Cargando…</div></div>
+      </div>
+
+      <!-- Subvista TABLA: todos los movimientos y el resumen mes × categoría -->
+      <div id="svTabla" style="display:none">
+        <div class="card">
+          <h2>Todos los movimientos <span class="sub">tabla</span></h2>
+          <div class="tscroll" id="tablaMovs"></div>
+        </div>
+        <div class="card">
+          <h2>Resumen mensual <span class="sub">mes × categoría</span></h2>
+          <div class="tscroll" id="tablaMeses"></div>
+        </div>
       </div>
 
       <!-- Subvista SALDOS: quién debe a quién + resúmenes y gráficos -->
@@ -324,16 +362,18 @@
           <div class="leyenda" id="leg6m"></div>
         </div>
 
-        <div class="card">
-          <h2>Resumen mensual <span class="sub">tabla</span></h2>
-          <div class="tscroll" id="tablaMeses"></div>
-        </div>
       </div>
 
       <!-- Alta de gasto: hoja inferior que abre el botón flotante -->
       <div class="hoja" id="hojaGasto" style="display:none">
         <div class="card form">
-          <h2>Añadir gasto <button id="cerrarHoja" title="Cerrar">✕</button></h2>
+          <h2>Añadir <button id="cerrarHoja" title="Cerrar">✕</button></h2>
+          <div class="seg" id="segModoAlta">
+            <button data-v="asis" class="on">🪄 Asistente</button>
+            <button data-v="form">Formulario</button>
+          </div>
+          <div id="asisBox"></div>
+          <div id="formRapido" style="display:none">
           <input id="gTitulo" placeholder="Concepto (ej: Compra Mercadona, Factura luz agosto…)">
           <div class="fila2">
             <input id="gImporte" placeholder="Importe €" inputmode="decimal">
@@ -361,6 +401,7 @@
             <button data-v="montse">Solo Montse</button>
           </div>
           <button class="btn" id="gAdd">＋ Añadir gasto</button>
+          </div>
         </div>
       </div>
       <button class="fab" id="fabAdd">＋ Añadir gasto</button>
@@ -396,6 +437,16 @@
         </div>
       </div>
       <div id="listaEstr"><div class="vacio">Cargando…</div></div>
+    </div>
+
+    <!-- ══ NOTAS (comentarios sobre gastos y facturas, compartidas) ══ -->
+    <div id="vNotas" style="display:none">
+      <div class="card form">
+        <h2>Añadir nota</h2>
+        <input id="nTexto" placeholder="Comentario sobre un gasto, una factura, un recibo…">
+        <button class="btn" id="nAdd">＋ Añadir nota</button>
+      </div>
+      <div id="listaNotas"><div class="vacio">Cargando…</div></div>
     </div>
   </div>
 
@@ -465,7 +516,7 @@ const rutaSegura = nombre => {
   return `piso-horta/${crypto.randomUUID().slice(0, 8)}-${Date.now()}-${limpio}`;
 };
 
-let uid = null, tab = 'gastos', facturas = [], estrategias = [], gastos = [];
+let uid = null, tab = 'gastos', facturas = [], estrategias = [], gastos = [], notas = [];
 let pago = 'carlos', para = 'ambos';
 // Subvista del apartado Gastos (estilo Tricount): lista o saldos.
 let vista = (() => { try { return localStorage.getItem('fh_gastos_vista') || 'gastos'; } catch { return 'gastos'; } })();
@@ -516,23 +567,30 @@ function datosDemo() {
   ];
   estrategias = [{ id: 'de1', title: 'Plan de compras ago/nov (demo)', content: 'Comprar ya el ventilador y el cepillo; dejar Tefal + microondas + tostadora para noviembre con cupón de 20 €.', done: false, created_by: 'Carlos' }];
   facturas = [{ id: 'df1', name: 'factura-luz-agosto.pdf', size: 182034, date: hoy(), folder: CARPETAS.luz, user_id: UID_CARLOS, bucket: 'archivo', storage_path: null }];
+  notas = [
+    { id: 'dn1', body: 'La factura de la luz de agosto vino alta: revisar la potencia contratada.', tipo: 'nota', importe: null, done: false, created_by: 'Carlos', created_at: ym + '-16T10:00:00Z' },
+    { id: 'dn2', body: 'Tostadora', tipo: 'compra', importe: 11.99, done: false, created_by: 'Montse', created_at: ym + '-12T09:00:00Z' },
+  ];
 }
 
 async function cargar() {
   if (!uid) return;
   if (DEMO) { pinta(); return; }
   $('estado').textContent = '';
-  const [f, e, g] = await Promise.all([
+  const [f, e, g, n] = await Promise.all([
     sb.from('files').select('id,name,size,date,folder,user_id,bucket,storage_path')
       .like('folder', 'Piso Horta%').order('date', { ascending: false }),
     sb.from('piso_horta_estrategias').select('*').order('created_at', { ascending: true }),
     sb.from('piso_horta_gastos').select('*').order('fecha', { ascending: false }),
+    sb.from('piso_horta_notas').select('*').order('created_at', { ascending: false }),
   ]);
   const err = f.error || e.error || g.error;
   if (err) { $('estado').textContent = '⚠️ ' + err.message; return; }
   facturas = f.data || [];
   estrategias = e.data || [];
   gastos = (g.data || []).map(x => ({ ...x, amount: Number(x.amount) || 0 }));
+  // Las notas no bloquean el resto si su tabla fallara.
+  if (!n.error) notas = n.data || [];
   pinta();
 }
 
@@ -571,21 +629,27 @@ function pinta() {
   $('nComida').textContent = porCarpeta('comida').length;
   $('nOtros').textContent = porCarpeta('otros').length;
   $('nAhorro').textContent = estrategias.length;
+  $('nNotas').textContent = notas.length;
   document.querySelectorAll('#tabs button').forEach(b => b.classList.toggle('on', b.dataset.t === tab));
   $('vGastos').style.display = tab === 'gastos' ? '' : 'none';
-  $('vFacturas').style.display = (tab === 'gastos' || tab === 'ahorro') ? 'none' : '';
+  $('vFacturas').style.display = (tab === 'gastos' || tab === 'ahorro' || tab === 'notas') ? 'none' : '';
   $('vAhorro').style.display = tab === 'ahorro' ? '' : 'none';
+  $('vNotas').style.display = tab === 'notas' ? '' : 'none';
   if (tab === 'gastos') pintaGastos();
   else if (tab === 'ahorro') pintaEstr();
+  else if (tab === 'notas') pintaNotas();
   else pintaFacturas();
 }
 
 // ══ GASTOS ════════════════════════════════════════════════════════════════
 function pintaGastos() {
   // Subvistas estilo Tricount: Gastos (lista) / Saldos (quién debe a quién).
+  if (!['gastos', 'tabla', 'saldos'].includes(vista)) vista = 'gastos';
   document.querySelectorAll('#segVista button').forEach(b => b.classList.toggle('on', b.dataset.v === vista));
   $('svGastos').style.display = vista === 'gastos' ? '' : 'none';
+  $('svTabla').style.display = vista === 'tabla' ? '' : 'none';
   $('svSaldos').style.display = vista === 'saldos' ? '' : 'none';
+  pintaTablaMovs();
 
   const yoP = yo(), otroP = yoP === 'carlos' ? 'montse' : 'carlos';
   // Con 2 personas el saldo de una es EXACTAMENTE el negativo de la otra:
@@ -764,6 +828,86 @@ function pintaMovimientos() {
   }).join('');
 }
 
+/** Subvista Tabla: todos los movimientos, ordenados y con total. */
+function pintaTablaMovs() {
+  const box = $('tablaMovs');
+  if (!box) return;
+  if (!gastos.length) { box.innerHTML = '<div class="vacio">Sin movimientos todavía.</div>'; return; }
+  const orden = [...gastos].sort((a, b) => (b.fecha || '').localeCompare(a.fecha || '') || String(b.created_at || '').localeCompare(String(a.created_at || '')));
+  const filas = orden.map(g => {
+    const esAj = g.category === 'ajuste';
+    const paraTxt = esAj ? `ajuste → ${PERSONA[g.beneficiario]?.label || ''}`
+      : g.beneficiario === 'ambos' ? 'A medias' : `Solo ${PERSONA[g.beneficiario]?.label || ''}`;
+    return `<tr${esAj ? ' style="opacity:.65"' : ''}>
+      <td>${g.fecha ? `${g.fecha.slice(8, 10)}/${g.fecha.slice(5, 7)}/${g.fecha.slice(2, 4)}` : 's/f'}</td>
+      <td style="text-align:left">${emojiDe(g)} ${esc(g.title)}</td>
+      <td>${esAj ? 'Ajuste' : (CAT[g.category]?.label || g.category)}</td>
+      <td>${PERSONA[g.paid_by]?.label || '?'}</td>
+      <td>${paraTxt}</td>
+      <td class="tot">${eur(g.amount)}</td>
+    </tr>`;
+  }).join('');
+  const total = gastos.filter(esGasto).reduce((s, g) => s + g.amount, 0);
+  box.innerHTML = `<table><thead><tr><th>Fecha</th><th style="text-align:left">Concepto</th><th>Categoría</th><th>Pagó</th><th>Para</th><th class="tot">Importe</th></tr></thead><tbody>${filas}</tbody><tfoot><tr><td colspan="5" style="text-align:right;color:var(--muted)">Total gastos (sin ajustes)</td><td class="tot">${eur(total)}</td></tr></tfoot></table>`;
+}
+
+// ══ NOTAS ═════════════════════════════════════════════════════════════════
+function pintaNotas() {
+  const box = $('listaNotas');
+  box.innerHTML = notas.length
+    ? notas.map(n => `
+      <div class="nota ${n.done ? 'hecha' : ''}">
+        ${n.tipo === 'compra'
+          ? `<button class="check ${n.done ? 'si' : ''}" data-ntoggle="${esc(n.id)}" title="${n.done ? 'Comprada' : 'Marcar comprada'}">✓</button>`
+          : '<span class="emo">🗒️</span>'}
+        <div class="cuerpo">
+          ${n.tipo === 'compra' ? '🛒 ' : ''}${esc(n.body)}${n.importe ? ` <b>· ~${eur(Number(n.importe))}</b>` : ''}
+          <div class="meta">${esc(n.created_by || '—')}${n.created_at ? ` · ${String(n.created_at).slice(8, 10)}/${String(n.created_at).slice(5, 7)}` : ''}</div>
+        </div>
+        <button class="accion rojo" data-ndel="${esc(n.id)}" title="Borrar">✕</button>
+      </div>`).join('')
+    : '<div class="vacio">Sin notas todavía. Apunta aquí comentarios sobre gastos o facturas.</div>';
+}
+
+async function addNota(body, tipo = 'nota', importe = null) {
+  const n = {
+    id: crypto.randomUUID(), body: body.slice(0, 1000), tipo, importe,
+    done: false, created_by: PERSONA[yo()].label, created_at: new Date().toISOString(),
+  };
+  notas.unshift(n); pinta();
+  if (DEMO) return true;
+  const { error } = await sb.from('piso_horta_notas').insert(n);
+  if (error) { alert('No se pudo guardar la nota: ' + error.message); cargar(); return false; }
+  return true;
+}
+$('nAdd').onclick = async () => {
+  const t = $('nTexto').value.trim();
+  if (!t) { $('nTexto').focus(); return; }
+  $('nTexto').value = '';
+  await addNota(t, 'nota');
+};
+$('nTexto').addEventListener('keydown', e => { if (e.key === 'Enter') $('nAdd').click(); });
+$('listaNotas').onclick = async e => {
+  const del = e.target.closest('[data-ndel]');
+  const tog = e.target.closest('[data-ntoggle]');
+  if (del) {
+    const n = notas.find(x => x.id === del.dataset.ndel);
+    if (!n || !confirm(`¿Borrar esta ${n.tipo === 'compra' ? 'compra prevista' : 'nota'}?`)) return;
+    notas = notas.filter(x => x.id !== n.id); pinta();
+    if (!DEMO) {
+      const { error } = await sb.from('piso_horta_notas').delete().eq('id', n.id);
+      if (error) { alert('No se pudo borrar: ' + error.message); cargar(); }
+    }
+    return;
+  }
+  if (tog) {
+    const n = notas.find(x => x.id === tog.dataset.ntoggle);
+    if (!n) return;
+    n.done = !n.done; pinta();
+    if (!DEMO) await sb.from('piso_horta_notas').update({ done: n.done }).eq('id', n.id);
+  }
+};
+
 // Alta de gasto
 async function addGasto(datos) {
   const g = {
@@ -806,10 +950,127 @@ $('segVista').onclick = e => {
   try { localStorage.setItem('fh_gastos_vista', vista); } catch { /* sin storage */ }
   pintaGastos();
 };
-const abreHoja = si => { $('hojaGasto').style.display = si ? 'flex' : 'none'; if (si) $('gTitulo').focus(); };
+const abreHoja = si => {
+  $('hojaGasto').style.display = si ? 'flex' : 'none';
+  if (si) { resetAsis(); pintaAsis(); if (modoAlta === 'form') $('gTitulo').focus(); }
+};
 $('fabAdd').onclick = () => abreHoja(true);
 $('cerrarHoja').onclick = () => abreHoja(false);
 $('hojaGasto').onclick = e => { if (e.target.id === 'hojaGasto') abreHoja(false); };
+
+// ── Asistente de alta: una pregunta por paso, con botones grandes ──
+let modoAlta = 'asis';
+let asis = null;
+const CHIPS_TIPO = [
+  { em: '🛒', t: 'Súper / comida', cat: 'comida', c: 'Compra súper' },
+  { em: '⛽', t: 'Gasolina', cat: 'otros', c: 'Gasolina' },
+  { em: '🚗', t: 'Peaje / parking', cat: 'otros', c: 'Peaje' },
+  { em: '🍽️', t: 'Restaurante', cat: 'comida', c: 'Restaurante' },
+  { em: '⚡', t: 'Luz', cat: 'luz', c: 'Factura luz' },
+  { em: '🔑', t: 'Alquiler y fijos', cat: 'alquiler', c: 'Alquiler' },
+  { em: '🛋️', t: 'Casa', cat: 'casa', c: 'Cosas de casa' },
+  { em: '✏️', t: 'Otro', cat: 'otros', c: '' },
+];
+function resetAsis() { asis = { paso: 0, categoria: 'otros', concepto: '', importe: null, pago: yo(), para: 'ambos', fecha: hoy() }; }
+function pintaAsis() {
+  document.querySelectorAll('#segModoAlta button').forEach(b => b.classList.toggle('on', b.dataset.v === modoAlta));
+  $('asisBox').style.display = modoAlta === 'asis' ? '' : 'none';
+  $('formRapido').style.display = modoAlta === 'form' ? '' : 'none';
+  if (modoAlta !== 'asis') return;
+  const B = $('asisBox');
+  const atras = `<button class="asisatras" data-a="atras">‹ Atrás</button>`;
+  const p = asis.paso;
+  if (p === 0) B.innerHTML = `
+    <p class="asispreg">¿Qué quieres apuntar?</p>
+    <div class="asisops una">
+      <button data-a="tipo-gasto"><span class="em">💶</span>Un gasto que ya está pagado</button>
+      <button data-a="tipo-compra"><span class="em">🛒</span>Una compra prevista (para no olvidarla)</button>
+      <button data-a="tipo-nota"><span class="em">🗒️</span>Una nota o comentario</button>
+    </div>`;
+  else if (p === 1) B.innerHTML = `
+    <p class="asispaso">Paso 1 de 5</p><p class="asispreg">¿De qué tipo es?</p>
+    <div class="asisops">${CHIPS_TIPO.map((c, i) => `<button data-a="chip-${i}"><span class="em">${c.em}</span>${c.t}</button>`).join('')}</div>${atras}`;
+  else if (p === 2) B.innerHTML = `
+    <p class="asispaso">Paso 2 de 5</p><p class="asispreg">¿Qué es y cuánto ha costado?</p>
+    <input id="aConcepto" placeholder="Concepto" value="${esc(asis.concepto)}">
+    <input id="aImporte" placeholder="Importe € (ej: 54,10)" inputmode="decimal" value="${asis.importe ?? ''}">
+    <div class="asisops una"><button data-a="sigue2">Seguir ›</button></div>${atras}`;
+  else if (p === 3) B.innerHTML = `
+    <p class="asispaso">Paso 3 de 5</p><p class="asispreg">¿Quién lo ha pagado?</p>
+    <div class="asisops">
+      <button data-a="pago-carlos"><span class="em">💜</span>Carlos${yo() === 'carlos' ? ' (yo)' : ''}</button>
+      <button data-a="pago-montse"><span class="em">💗</span>Montse${yo() === 'montse' ? ' (yo)' : ''}</button>
+    </div>${atras}`;
+  else if (p === 4) B.innerHTML = `
+    <p class="asispaso">Paso 4 de 5</p><p class="asispreg">¿Para quién es?</p>
+    <div class="asisops una">
+      <button data-a="para-ambos"><span class="em">👫</span>Los dos, a medias</button>
+      <button data-a="para-carlos">Solo Carlos</button>
+      <button data-a="para-montse">Solo Montse</button>
+    </div>${atras}`;
+  else if (p === 5) B.innerHTML = `
+    <p class="asispaso">Paso 5 de 5 · Revisa y apunta</p>
+    <div class="asisresumen">
+      <div class="fila"><span>Concepto</span><b>${esc(asis.concepto)}</b></div>
+      <div class="fila"><span>Importe</span><b>${eur(asis.importe)}</b></div>
+      <div class="fila"><span>Categoría</span><b>${CAT[asis.categoria]?.label || asis.categoria}</b></div>
+      <div class="fila"><span>Pagó</span><b>${PERSONA[asis.pago].label}</b></div>
+      <div class="fila"><span>Para</span><b>${asis.para === 'ambos' ? 'Los dos, a medias' : 'Solo ' + PERSONA[asis.para].label}</b></div>
+      <div class="fila"><span>Fecha</span><b><input id="aFecha" type="date" value="${asis.fecha}" style="margin:0;padding:4px 6px;width:auto"></b></div>
+    </div>
+    <div class="asisops una"><button data-a="guardar">✓ Apuntar gasto</button></div>${atras}`;
+  else if (p === 10) B.innerHTML = `
+    <p class="asispreg">🛒 ¿Qué compra queréis hacer?</p>
+    <input id="aCompra" placeholder="Qué es (ej: tostadora, pilas…)">
+    <input id="aCompraImp" placeholder="Precio aproximado € (opcional)" inputmode="decimal">
+    <div class="asisops una"><button data-a="guardar-compra">✓ Guardar en Notas</button></div>${atras}`;
+  else if (p === 20) B.innerHTML = `
+    <p class="asispreg">🗒️ Escribe la nota</p>
+    <input id="aNota" placeholder="Comentario sobre un gasto, una factura…">
+    <div class="asisops una"><button data-a="guardar-nota">✓ Guardar en Notas</button></div>${atras}`;
+}
+$('segModoAlta').onclick = e => { const b = e.target.closest('button'); if (!b) return; modoAlta = b.dataset.v; pintaAsis(); };
+$('asisBox').onclick = async e => {
+  const b = e.target.closest('button[data-a]'); if (!b) return;
+  const a = b.dataset.a;
+  if (a === 'atras') { asis.paso = asis.paso >= 10 ? 0 : Math.max(0, asis.paso - 1); pintaAsis(); return; }
+  if (a === 'tipo-gasto') asis.paso = 1;
+  else if (a === 'tipo-compra') asis.paso = 10;
+  else if (a === 'tipo-nota') asis.paso = 20;
+  else if (a.startsWith('chip-')) { const c = CHIPS_TIPO[+a.slice(5)]; asis.categoria = c.cat; asis.concepto = c.c; asis.paso = 2; }
+  else if (a === 'sigue2') {
+    asis.concepto = ($('aConcepto')?.value || '').trim();
+    asis.importe = numDe($('aImporte')?.value);
+    if (!asis.concepto) { $('aConcepto').focus(); return; }
+    if (!asis.importe) { $('aImporte').focus(); return; }
+    asis.paso = 3;
+  }
+  else if (a === 'pago-carlos') { asis.pago = 'carlos'; asis.paso = 4; }
+  else if (a === 'pago-montse') { asis.pago = 'montse'; asis.paso = 4; }
+  else if (a.startsWith('para-')) { asis.para = a.slice(5); asis.paso = 5; }
+  else if (a === 'guardar') {
+    asis.fecha = $('aFecha')?.value || hoy();
+    await addGasto({ title: asis.concepto, amount: asis.importe, category: asis.categoria, paid_by: asis.pago, beneficiario: asis.para, fecha: asis.fecha });
+    abreHoja(false); return;
+  }
+  else if (a === 'guardar-compra') {
+    const t = ($('aCompra')?.value || '').trim(); if (!t) { $('aCompra').focus(); return; }
+    await addNota(t, 'compra', numDe($('aCompraImp')?.value));
+    abreHoja(false); tab = 'notas'; pinta(); return;
+  }
+  else if (a === 'guardar-nota') {
+    const t = ($('aNota')?.value || '').trim(); if (!t) { $('aNota').focus(); return; }
+    await addNota(t, 'nota');
+    abreHoja(false); tab = 'notas'; pinta(); return;
+  }
+  pintaAsis();
+};
+
+// Botón 🔄: vuelve a pedir gastos, facturas, notas y estrategias a la nube.
+$('recargar').onclick = async () => {
+  const b = $('recargar'); b.classList.add('girando');
+  try { await cargar(); } finally { setTimeout(() => b.classList.remove('girando'), 400); }
+};
 $('saldarBtn').onclick = async () => {
   const balC = balanceDe(gastos, 'carlos');
   if (Math.abs(balC) < 0.01) return;
@@ -1022,7 +1283,15 @@ if (DEMO) {
 <script>
   // PWA: instalable y con apertura instantánea (los datos nunca se cachean).
   if ('serviceWorker' in navigator && location.protocol === 'https:') {
+    const teniaSW = !!navigator.serviceWorker.controller;
     addEventListener('load', () => navigator.serviceWorker.register('sw.js').catch(() => {}));
+    // Si llega una versión nueva mientras la app está abierta, se recarga UNA
+    // vez sola: nadie se queda semanas con la interfaz vieja en caché.
+    let recargadoSW = false;
+    navigator.serviceWorker.addEventListener('controllerchange', () => {
+      if (!teniaSW || recargadoSW) return;
+      recargadoSW = true; location.reload();
+    });
   }
 </script>
 </body>
